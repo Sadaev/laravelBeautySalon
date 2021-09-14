@@ -1,7 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Models\Client;
+use App\Models\Staff;
+use App\Models\Purchases;
+use App\Models\WorkingHours;
+use App\Models\Services;
+use App\Http\Controllers\PurchasesController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,5 +19,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/calendar', function () {
-    return view('calendar');
+    return view('calendar', [
+        'clients' => Client::all(),
+        'staffs' => Staff::all(),
+        'purchases' => Purchases::all(),
+        'working_hours' => WorkingHours::all(),
+        'services' => Services::all()
+        ]);
 });
+
+Route::post('/calendar/update', [PurchasesController::class, 'store']);

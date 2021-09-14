@@ -1,1 +1,6 @@
 @import "~bootstrap/scss/bootstrap";
+.cell{
+    &:hover{
+        background: #c5d7f2;
+    }
+}
