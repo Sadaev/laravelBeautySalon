@@ -18,7 +18,7 @@ class CreateClientTable extends Migration
             $table->timestamps();
             $table->string('name', 50);
             $table->string('first_name', 50);
-            $table->string('phone', 12);
+            $table->string('phone', 20);
         });
     }
 

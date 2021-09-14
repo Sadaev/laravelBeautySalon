@@ -17,7 +17,7 @@ class CreateStaffTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('name', 50);
-            $table->string('phone', 12);
+            $table->string('phone', 20);
         });
     }
 
