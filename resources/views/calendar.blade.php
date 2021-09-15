@@ -33,8 +33,12 @@
                         @foreach($staffs as $staff)
                             <td class="cell" data-staffid="{{$staff->id}}" data-staffname="{{$staff->name}}"  data-time="{{\Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i')}}">
                                 @foreach($purchases as $purchase)
-                                    @if($purchase->staff_id === $staff->id && \Carbon\Carbon::createFromFormat("yyyy-mm-dd H:i:s", $purchase->register_date)->format('h:i') === \Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i'))
-                                        <div data-id="{{$purchase->id}}">{{$purchase->total_price}}}</div>
+                                    @if($purchase->staff_id === $staff->id && \Carbon\Carbon::createFromFormat("Y-m-d H:i:s", $purchase->register_date)->format('h:i') == \Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i'))
+                                        <div data-purchaseId="{{$purchase->id}}">
+                                            <div>{{$purchase->client_id}}</div>
+                                            <div>{{$purchase->services_id}}</div>
+                                            <div>{{$purchase->total_price}}</div>
+                                        </div>
                                     @endif
                                 @endforeach
                             </td>
@@ -58,11 +62,11 @@
                             <div class="mb-3">
                                 <label class="form-label">Имя работника</label>
                                 <input type="hidden" name="staff_id" value="">
-                                <input type="text" class="form-control" id="staff_name" name="staff_name" value="" placeholder="имя работника" />
+                                <input type="text" class="form-control" id="staff_name" value="" placeholder="имя работника" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Время записи</label>
-                                <input type="text" class="form-control" id="time" name="date" placeholder="время записи" />
+                                <input type="text" class="form-control" id="time" name="register_date" placeholder="время записи" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Клиент</label>
@@ -75,16 +79,16 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Услуга</label>
-                                <select type="text" class="form-control" id="services" name="service_id" placeholder="услуга">
+                                <select type="text" class="form-control" id="services" name="services_id" placeholder="услуга">
                                     <option value="none" selected>Выберите услугу</option>
                                     @foreach($services as $service)
-                                        <option value="{{$service->id}}">{{$service->name}}</option>
+                                        <option value="{{$service->id}}" data-price="{{$service->price}}">{{$service->name}}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Цена</label>
-                                <input type="text" class="form-control" id="time" name="date" placeholder="цена" />
+                                <input type="text" class="form-control" id="price" name="total_price" placeholder="цена" />
                             </div>
                         </form>
                         <div class="modal-footer d-block">

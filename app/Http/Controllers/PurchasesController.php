@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Purchases;
 
 class PurchasesController extends Controller
 {
     public function store(Request $request) {
-        $request_data = $request;
+        Purchases::create($request->all());
     }
 }
