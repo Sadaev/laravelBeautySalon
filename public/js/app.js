@@ -5208,37 +5208,132 @@ module.exports = {
 
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 
-var _require = __webpack_require__(/*! resolve-url-loader/lib/join-function/debug */ "./node_modules/resolve-url-loader/lib/join-function/debug.js"),
-    createDebugLogger = _require.createDebugLogger;
-
 var cells = document.querySelectorAll('.cell');
 var modal = new bootstrap.Modal(document.querySelector('#calendarModal'), {
   keyboard: false
 });
 var form = document.querySelector('#purchase_form');
-var formSubmit = form.querySelector('#form_submit');
+var formSubmit = document.querySelector('#form_submit');
+var serviceSelect = form.querySelector('#services');
+var formRemove = document.querySelector('#purchase_remove');
+serviceSelect.addEventListener('change', getServicePrice);
 cells.forEach(function (cell) {
-  cell.addEventListener('click', function (event) {
-    return fillModalForm(event);
-  });
-}); // formSubmit.addEventListener('submit', () => {
-//     axios.post('/calendar/update', new FormData(form))
-//         .then((response ) => console.log(response))
-//         .catch((error) => console.log(error))
-//         .finally(() => console.log('finish'));
-// })
+  cell.addEventListener('click', fillModalForm);
+});
+formSubmit.addEventListener('click', saveData);
+formRemove.addEventListener('click', removeData);
 
-var fillModalForm = function fillModalForm(e) {
-  var $el = e.target;
+function removeData(event) {
+  event.preventDefault();
+  var formData = new FormData(form);
+  var id = formData.get('purchases_id');
+  axios["delete"]('/calendar', {
+    data: {
+      id: id
+    }
+  }).then(function (res) {
+    return console.log(res);
+  })["catch"](function (e) {
+    return console.log('ErrorMessage: ', e);
+  })["finally"](function () {
+    modal.toggle();
+    document.location.reload();
+  });
+}
+
+function getServicePrice(event) {
+  var $elem = event.currentTarget;
+  var $selectedOption = $elem.selectedOptions.item(0);
+  var priceInput = form.querySelector('#price');
+  var price = $selectedOption.dataset.price;
+  priceInput.value = price !== null && price !== void 0 ? price : '';
+}
+
+function saveData(event) {
+  event.preventDefault();
+  var formData = new FormData(form);
+  var time = parseTime(formData.get('register_date'));
+  var date = new Date();
+  date.setHours(time.hour, time.minute, 0);
+  var prepareDate = date.toISOString().split('T')[0] + ' ' + date.toTimeString().split(' ')[0];
+  formData.set('register_date', prepareDate);
+  axios.post('/calendar', formData).then(function (response) {
+    console.log(response);
+  })["catch"](function (error) {
+    return console.log(error);
+  })["finally"](function () {
+    modal.toggle();
+    document.location.reload();
+  });
+}
+
+function parseTime(time) {
+  var hour = time.slice(0, 2);
+  var indexOfSeparator = time.indexOf(':');
+  console.log(indexOfSeparator);
+  var minute = time.slice(indexOfSeparator + 1, indexOfSeparator + 3);
+  return {
+    'hour': hour,
+    'minute': minute
+  };
+}
+
+function fillModalForm(e) {
+  var $el = e.currentTarget;
+  console.log('element: ', $el);
   var staff_id = form.querySelector('[name="staff_id"]');
-  var staff_name = form.querySelector('[name="staff_name"]');
+  var staff_name = form.querySelector('#staff_name');
   var register_date = form.querySelector('#time');
   var services = form.querySelector('#services');
-  staff_id.value = $el.dataset.staffid || '';
-  staff_name.value = $el.dataset.staffname || '';
-  register_date.value = $el.dataset.time || '';
+  var purchases_id = form.querySelector('#purchases');
+  var servicesSelect = form.querySelector('#services');
+  var clientSelect = form.querySelector('#clients');
+  var price = form.querySelector('#price');
+  var purchaseInfo = $el.querySelector('.registerInfo');
+  var staffIdValue = $el.dataset.staffid;
+  var staffNameValue = $el.dataset.staffname;
+  var timeValue = $el.dataset.time;
+  var priceValue = '';
+  var service = '';
+  var client = '';
+  var serviceId = '';
+  var clientId = '';
+  var purchaseValue = '';
+  console.log({
+    'staffid': staffIdValue,
+    'stafName': staffNameValue,
+    'time': timeValue
+  });
+  select(servicesSelect, 'none');
+  select(clientSelect, 'none');
+
+  if (purchaseInfo) {
+    purchaseValue = purchaseInfo.dataset.purchaseid;
+    priceValue = purchaseInfo.querySelector('[data-service="price"]').dataset.price;
+    serviceId = purchaseInfo.querySelector('[data-service="name"]').dataset.serviceid;
+    clientId = purchaseInfo.querySelector('[data-client="name"]').dataset.clientid;
+    select(servicesSelect, serviceId);
+    select(clientSelect, clientId);
+    formRemove.hidden = false;
+  } else {
+    formRemove.hidden = true;
+  }
+
+  purchases_id.value = purchaseValue;
+  staff_id.value = staffIdValue || '';
+  staff_name.value = staffNameValue || '';
+  register_date.value = timeValue || '';
+  price.value = priceValue || '';
   modal.toggle();
-};
+}
+
+function select(select, value) {
+  var options = select.getElementsByTagName('option');
+
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].value == value) select[i].selected = true;
+  }
+}
 
 /***/ }),
 
@@ -27665,104 +27760,6 @@ process.umask = function() { return 0; };
 
 /***/ }),
 
-/***/ "./node_modules/resolve-url-loader/lib/join-function/debug.js":
-/*!********************************************************************!*\
-  !*** ./node_modules/resolve-url-loader/lib/join-function/debug.js ***!
-  \********************************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-/* provided dependency */ var process = __webpack_require__(/*! process/browser */ "./node_modules/process/browser.js");
-/*
- * MIT License http://opensource.org/licenses/MIT
- * Author: Ben Holloway @bholloway
- */
-
-
-const path = __webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-
-const PACKAGE_NAME = __webpack_require__(/*! ../../package.json */ "./node_modules/resolve-url-loader/package.json").name;
-
-/**
- * Paths are formatted to have posix style path separators and those within the CWD are made relative to CWD.
- *
- * @param {string} absolutePath An absolute path to format
- * @returns {string} the formatted path
- */
-const pathToString = (absolutePath) => {
-  if (absolutePath === '') {
-    return '-empty-';
-  } else {
-    const relative = path.relative(process.cwd(), absolutePath).split(path.sep);
-    const segments =
-      (relative[0] !== '..') ? ['.'].concat(relative).filter(Boolean) :
-        (relative.lastIndexOf('..') < 2) ? relative :
-          absolutePath.split(path.sep);
-    return segments.join('/');
-  }
-};
-
-exports.pathToString = pathToString;
-
-/**
- * Format a debug message.
- *
- * @param {string} filename The file being processed by webpack
- * @param {string} uri A uri path, relative or absolute
- * @param {Array<{base:string,joined:string,isSuccess:boolean}>} attempts An array of attempts, possibly empty
- * @return {string} Formatted message
- */
-const formatJoinMessage = (filename, uri, attempts) => {
-  const attemptToCells = (_, i, array) => {
-    const { base: prev } = (i === 0) ? {} : array[i-1];
-    const { base: curr, joined } = array[i];
-    return [(curr === prev) ? '' : pathToString(curr), pathToString(joined)];
-  };
-
-  const formatCells = (lines) => {
-    const maxWidth = lines.reduce((max, [cellA]) => Math.max(max, cellA.length), 0);
-    return lines.map(([cellA, cellB]) => [cellA.padEnd(maxWidth), cellB]).map((cells) => cells.join(' --> '));
-  };
-
-  return [PACKAGE_NAME + ': ' + pathToString(filename) + ': ' + uri]
-    .concat(attempts.length === 0 ? '-empty-' : formatCells(attempts.map(attemptToCells)))
-    .concat(attempts.some(({ isSuccess }) => isSuccess) ? 'FOUND' : 'NOT FOUND')
-    .join('\n  ');
-};
-
-exports.formatJoinMessage = formatJoinMessage;
-
-/**
- * A factory for a log function predicated on the given debug parameter.
- *
- * The logging function created accepts a function that formats a message and parameters that the function utilises.
- * Presuming the message function may be expensive we only call it if logging is enabled.
- *
- * The log messages are de-duplicated based on the parameters, so it is assumed they are simple types that stringify
- * well.
- *
- * @param {function|boolean} debug A boolean or debug function
- * @return {function(function, array):void} A logging function possibly degenerate
- */
-const createDebugLogger = (debug) => {
-  const log = !!debug && ((typeof debug === 'function') ? debug : console.log);
-  const cache = {};
-  return log ?
-    ((msgFn, params) => {
-      const key = Function.prototype.toString.call(msgFn) + JSON.stringify(params);
-      if (!cache[key]) {
-        cache[key] = true;
-        log(msgFn.apply(null, params));
-      }
-    }) :
-    (() => undefined);
-};
-
-exports.createDebugLogger = createDebugLogger;
-
-
-/***/ }),
-
 /***/ "./node_modules/axios/package.json":
 /*!*****************************************!*\
   !*** ./node_modules/axios/package.json ***!
@@ -27771,17 +27768,6 @@ exports.createDebugLogger = createDebugLogger;
 
 "use strict";
 module.exports = JSON.parse('{"_from":"axios@^0.21","_id":"axios@0.21.4","_inBundle":false,"_integrity":"sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==","_location":"/axios","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"axios@^0.21","name":"axios","escapedName":"axios","rawSpec":"^0.21","saveSpec":null,"fetchSpec":"^0.21"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/axios/-/axios-0.21.4.tgz","_shasum":"c67b90dc0568e5c1cf2b0b858c43ba28e2eda575","_spec":"axios@^0.21","_where":"C:\\\\OpenServer\\\\domains\\\\laravelBeautySalon","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundleDependencies":false,"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.14.0"},"deprecated":false,"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"coveralls":"^3.0.0","es6-promise":"^4.2.4","grunt":"^1.3.0","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.1.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^23.0.0","grunt-karma":"^4.0.0","grunt-mocha-test":"^0.13.3","grunt-ts":"^6.0.0-beta.19","grunt-webpack":"^4.0.2","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^6.3.2","karma-chrome-launcher":"^3.1.0","karma-firefox-launcher":"^2.1.0","karma-jasmine":"^1.1.1","karma-jasmine-ajax":"^0.1.13","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^4.3.6","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.8","karma-webpack":"^4.0.2","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","mocha":"^8.2.1","sinon":"^4.5.0","terser-webpack-plugin":"^4.2.3","typescript":"^4.0.5","url-search-params":"^0.10.0","webpack":"^4.44.2","webpack-dev-server":"^3.11.0"},"homepage":"https://axios-http.com","jsdelivr":"dist/axios.min.js","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","fix":"eslint --fix lib/**/*.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","unpkg":"dist/axios.min.js","version":"0.21.4"}');
-
-/***/ }),
-
-/***/ "./node_modules/resolve-url-loader/package.json":
-/*!******************************************************!*\
-  !*** ./node_modules/resolve-url-loader/package.json ***!
-  \******************************************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = JSON.parse('{"_from":"resolve-url-loader@4.0.0","_id":"resolve-url-loader@4.0.0","_inBundle":false,"_integrity":"sha512-05VEMczVREcbtT7Bz+C+96eUO5HDNvdthIiMB34t7FcF8ehcu4wC0sSgPUubs3XW2Q3CNLJk/BJrCU9wVRymiA==","_location":"/resolve-url-loader","_phantomChildren":{"ansi-styles":"3.2.1","big.js":"5.2.2","emojis-list":"3.0.0","escape-string-regexp":"1.0.5","has-flag":"3.0.0","json5":"2.2.0"},"_requested":{"type":"version","registry":true,"raw":"resolve-url-loader@4.0.0","name":"resolve-url-loader","escapedName":"resolve-url-loader","rawSpec":"4.0.0","saveSpec":null,"fetchSpec":"4.0.0"},"_requiredBy":["#DEV:/","#USER"],"_resolved":"https://registry.npmjs.org/resolve-url-loader/-/resolve-url-loader-4.0.0.tgz","_shasum":"d50d4ddc746bb10468443167acf800dcd6c3ad57","_spec":"resolve-url-loader@4.0.0","_where":"C:\\\\OpenServer\\\\domains\\\\laravelBeautySalon","author":{"name":"bholloway"},"bugs":{"url":"https://github.com/bholloway/resolve-url-loader/issues"},"bundleDependencies":false,"dependencies":{"adjust-sourcemap-loader":"^4.0.0","convert-source-map":"^1.7.0","loader-utils":"^2.0.0","postcss":"^7.0.35","source-map":"0.6.1"},"deprecated":false,"description":"Webpack loader that resolves relative paths in url() statements based on the original source file","engines":{"node":">=8.9"},"files":["index.js","lib/**/+([a-z-]).js","docs/**/*.*"],"homepage":"https://github.com/bholloway/resolve-url-loader/tree/v4-maintenance/packages/resolve-url-loader","keywords":["webpack","loader","css","normalize","rewrite","resolve","url","sass","relative","file"],"license":"MIT","main":"index.js","name":"resolve-url-loader","peerDependencies":{"rework":"1.0.1","rework-visit":"1.0.0"},"peerDependenciesMeta":{"rework":{"optional":true},"rework-visit":{"optional":true}},"repository":{"type":"git","url":"git+https://github.com/bholloway/resolve-url-loader.git","directory":"packages/resolve-url-loader"},"version":"4.0.0"}');
 
 /***/ })
 

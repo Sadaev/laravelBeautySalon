@@ -22,10 +22,11 @@ Route::get('/calendar', function () {
     return view('calendar', [
         'clients' => Client::all(),
         'staffs' => Staff::all(),
-        'purchases' => Purchases::all(),
+        'purchases' => Purchases::with(['services', 'staff', 'client'])->get(),
         'working_hours' => WorkingHours::all(),
         'services' => Services::all()
         ]);
 });
 
-Route::post('/calendar/update', [PurchasesController::class, 'store']);
+Route::post('/calendar', [PurchasesController::class, 'store']);
+Route::DELETE('/calendar', [PurchasesController::class, 'remove']);

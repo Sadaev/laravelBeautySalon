@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css')}}">
 </head>
 <body>
-    <header class="sticky-top">
+    <header class="">
         <div class="container text-center p-5">
             <h2>Салон красоты</h2>
         </div>
@@ -34,10 +34,16 @@
                             <td class="cell" data-staffid="{{$staff->id}}" data-staffname="{{$staff->name}}"  data-time="{{\Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i')}}">
                                 @foreach($purchases as $purchase)
                                     @if($purchase->staff_id === $staff->id && \Carbon\Carbon::createFromFormat("Y-m-d H:i:s", $purchase->register_date)->format('h:i') == \Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i'))
-                                        <div data-purchaseId="{{$purchase->id}}">
-                                            <div>{{$purchase->client_id}}</div>
-                                            <div>{{$purchase->services_id}}</div>
-                                            <div>{{$purchase->total_price}}</div>
+                                        <div class="registerInfo" data-purchaseid="{{$purchase->id}}">
+                                            <div class="client" data-client="name" data-clientid="{{$purchase->client_id}}">
+                                                <p>Клиент: {{$purchase->client->name}}</p>
+                                            </div>
+                                            <div class="service_name" data-service="name" data-serviceid="{{$purchase->services_id}}">
+                                                <p>Услуга: {{$purchase->services->name}}</p>
+                                            </div>
+                                            <div class="service_price" data-service="price" data-price="{{$purchase->services->price}}">
+                                                <p>Цена: {{$purchase->services->price}}</p>
+                                            </div>
                                         </div>
                                     @endif
                                 @endforeach
@@ -59,6 +65,7 @@
                     <div class="modal-body">
 {{--                        action="{{ url('/calendar/update') }}" method="post"--}}
                         <form id="purchase_form">
+                            <input type="hidden" name="purchases_id" id="purchases">
                             <div class="mb-3">
                                 <label class="form-label">Имя работника</label>
                                 <input type="hidden" name="staff_id" value="">
@@ -94,6 +101,7 @@
                         <div class="modal-footer d-block">
                             <button type="submit" id="form_submit" class="btn btn-success float-end">сохранить</button>
                             <button type="button" class="btn btn-secondary float-end" data-bs-dismiss="modal">отмена</button>
+                            <button type="button" class="btn btn-danger" hidden id="purchase_remove">удалить</button>
                         </div>
                     </div>
                 </div>
