@@ -19,5 +19,10 @@
         "resolve-url-loader": "^4.0.0",
         "sass": "^1.40.1",
         "sass-loader": "^12.1.0"
+    },
+    "dependencies": {
+        "@fullcalendar/core": "^5.9.0",
+        "@fullcalendar/interaction": "^5.9.0",
+        "@fullcalendar/resource-timegrid": "^5.9.0"
     }
 }

@@ -13,7 +13,7 @@ class Purchases extends Model
     use HasFactory;
 
     protected $table = 'purchases';
-    protected $fillable = ['register_date', 'total_price', 'client_id', 'staff_id', 'services_id'];
+    protected $fillable = ['register_date', 'total_price', 'client_id', 'staff_id', 'services_id', 'service_end_date'];
 
     public function services()
     {

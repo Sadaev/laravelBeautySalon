@@ -27,7 +27,6 @@
                 </thead>
                 <tbody>
 
-                @foreach($working_hours as $time)
                     <tr>
                         <th scope="row">{{\Carbon\Carbon::createFromFormat("H:i:s", $time->time)->format('h:i')}}</th>
                         @foreach($staffs as $staff)
@@ -50,7 +49,6 @@
                             </td>
                         @endforeach
                     </tr>
-                @endforeach
                 </tbody>
             </table>
         </div>

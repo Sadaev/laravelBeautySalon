@@ -1,5 +1,4 @@
 require('./bootstrap');
-
 const cells = document.querySelectorAll('.cell');
 const modal = new bootstrap.Modal(document.querySelector('#calendarModal'), {
     keyboard: false
@@ -23,6 +22,8 @@ function removeData(event){
     event.preventDefault();
     const formData = new FormData(form);
     const id = formData.get('purchases_id');
+    formSubmit.disable = true;
+    formRemove.disable = true;
     axios.delete('/calendar', {
         data: {id}
     }).then((res) => console.log(res))
@@ -33,7 +34,7 @@ function removeData(event){
         });
 }
 
-function getServicePrice(event) {
+function changeServiceSelect(event) {
     const $elem = event.currentTarget;
     const $selectedOption = $elem.selectedOptions.item(0);
     const priceInput = form.querySelector('#price');
@@ -50,6 +51,8 @@ function saveData(event) {
     const prepareDate = date.toISOString().split('T')[0] + ' '
         + date.toTimeString().split(' ')[0];
     formData.set('register_date', prepareDate);
+    formSubmit.disable = true;
+    formRemove.disable = true;
     axios.post('/calendar', formData)
         .then((response ) => {
             console.log(response);
@@ -74,6 +77,8 @@ function parseTime(time) {
 
 function fillModalForm(e)
 {
+    formSubmit.disable = false;
+    formRemove.disable = false;
     const $el = e.currentTarget;
     console.log('element: ', $el);
     const staff_id = form.querySelector('[name="staff_id"]');

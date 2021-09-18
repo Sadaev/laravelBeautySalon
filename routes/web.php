@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Client;
 use App\Models\Staff;
 use App\Models\Purchases;
-use App\Models\WorkingHours;
 use App\Models\Services;
 use App\Http\Controllers\PurchasesController;
+use App\Http\Resources\StaffCollection;
+use App\Http\Resources\PurchasesCollection;
+use App\Http\Resources\PurchasesResourse;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -23,10 +25,28 @@ Route::get('/calendar', function () {
         'clients' => Client::all(),
         'staffs' => Staff::all(),
         'purchases' => Purchases::with(['services', 'staff', 'client'])->get(),
-        'working_hours' => WorkingHours::all(),
         'services' => Services::all()
         ]);
 });
 
 Route::post('/calendar', [PurchasesController::class, 'store']);
 Route::DELETE('/calendar', [PurchasesController::class, 'remove']);
+
+Route::GET('/newcalendar', function () {
+     return view('libcalendar', [
+         'clients' => Client::all(),
+         'staffs' => Staff::all(),
+         'services' => Services::all()
+     ]);
+});
+
+Route::GET('/newcalendar/staffs', function() {
+    return new StaffCollection(Staff::all());
+});
+
+Route::GET('/newcalendar/purchases', function() {
+    return new PurchasesCollection(Purchases::all());
+});
+
+Route::POST('/newcalendar', [PurchasesController::class, 'store']);
+Route::DELETE('/newcalendar', [PurchasesController::class, 'remove']);
