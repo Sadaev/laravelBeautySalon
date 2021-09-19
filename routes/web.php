@@ -20,18 +20,6 @@ use App\Http\Resources\PurchasesResourse;
 |
 */
 
-Route::get('/calendar', function () {
-    return view('calendar', [
-        'clients' => Client::all(),
-        'staffs' => Staff::all(),
-        'purchases' => Purchases::with(['services', 'staff', 'client'])->get(),
-        'services' => Services::all()
-        ]);
-});
-
-Route::post('/calendar', [PurchasesController::class, 'store']);
-Route::DELETE('/calendar', [PurchasesController::class, 'remove']);
-
 Route::GET('/newcalendar', function () {
      return view('libcalendar', [
          'clients' => Client::all(),
