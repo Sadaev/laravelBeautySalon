@@ -30,10 +30,9 @@ class PurchasesCollection extends ResourceCollection
                     'end' => Carbon::createFromFormat('Y-m-d H:i:s', $purchase->service_end_date, 'Asia/Almaty')->format('c'),
                     'resourceId' => $purchase->staff_id,
                     'title' => $purchase->client_id,
-                    'client' => ClientModel::findOrFail($purchase->client_id),
-                    'total_price' => $purchase->total_price,
-                    'service_id' => $purchase->services_id,
-                    'staff' => new StaffResource(Staff::find($purchase->staff_id))
+                    'client' => $purchase->client,
+                    'service' => $purchase->services,
+                    'staff' => $purchase->staff
                 ];
             })
         ];

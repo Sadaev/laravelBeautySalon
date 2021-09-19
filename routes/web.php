@@ -45,7 +45,7 @@ Route::GET('/newcalendar/staffs', function() {
 });
 
 Route::GET('/newcalendar/purchases', function() {
-    return new PurchasesCollection(Purchases::all());
+    return new PurchasesCollection(Purchases::with(['services', 'staff', 'client'])->get());
 });
 
 Route::POST('/newcalendar', [PurchasesController::class, 'store']);

@@ -2,6 +2,7 @@ require('./bootstrap');
 import {Calendar} from '@fullcalendar/core';
 import resourceTimeGridPlugin  from '@fullcalendar/resource-timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import {plusTime, pT, select, parseTime, timeToDateTime, parseDateToTime, parseT} from './utils'
 
 const calendarEl = document.querySelector('#calendar');
 const modalEl = document.querySelector('#calendarNewModal' );
@@ -12,41 +13,102 @@ const inputRegisterTime = modalEl.querySelector('#register_time');
 const inputStaffId = modalEl.querySelector('[name="staff_id"]');
 
 const form = document.querySelector('#purchase_form');
-const formSubmit = document.querySelector('#form_submit');
 const serviceSelect = form.querySelector('#services');
-const formRemove = document.querySelector('#purchase_remove');
 const clientSelect = form.querySelector('#clients');
 const price = form.querySelector('#price');
 const endTimeInput = form.querySelector('#end_date');
 const serviceStartDate = form.querySelector('#register_time');
 const purchases_id = form.querySelector('#purchases');
 
-formSubmit.addEventListener('click', saveData)
+const formRemove = document.querySelector('#purchase_remove');
+const formSubmit = document.querySelector('#form_submit');
 
-formRemove.addEventListener('click', removeData);
 
 serviceSelect.addEventListener('change', changeServiceSelect);
 
-function removeData(event){
-    event.preventDefault();
-    const formData = new FormData(form);
-    const id = formData.get('purchases_id');
-    formSubmit.disable = true;
-    formRemove.disable = true;
-    axios.delete('/newcalendar', {
-        data: {id}
-    }).then((res) => console.log(res))
-        .catch((e) => console.log('ErrorMessage: ', e))
-        .finally(() => {
-            modal.toggle();
-            document.location.reload();
-        });
-}
+
+formSubmit.addEventListener('click', saveData)
+formRemove.addEventListener('click', removeData);
+
+
+const calendar = new Calendar(calendarEl, {
+    plugins: [ resourceTimeGridPlugin, interactionPlugin ],
+    initialView: 'resourceTimeGridDay',
+    locale: 'ru',
+    selectable: true,
+    allDaySlot: false,
+    height: '700px',
+    resources: (fetchInfo, successCallback, failureCallback) => {
+        axios
+            .get('/newcalendar/staffs')
+            .then(({data}) => successCallback(data.data))
+            .catch(failureCallback);
+    },
+    slotMinTime: '08:00:00',
+    slotMaxTime: '23:00:00',
+    slotLabelFormat: {
+        hour: 'numeric',
+        minute: '2-digit',
+        omitZeroMinute: false,
+    },
+    dateClick: ({resource, date}) => {
+        const {id, title} = resource;
+        inputStaff.value = title;
+        inputStaffId.value = id;
+        inputRegisterTime.value = parseDateToTime(date);
+        clearModalForm();
+        formSubmit.disabled = false;
+        formRemove.hidden = true;
+        modal.toggle();
+    },
+    eventClick: ({event}) => {
+        fillModal(
+            {
+                ...event.extendedProps,
+                startTime: event.start,
+                endTime: event.end
+            });
+        modal.toggle();
+    },
+    events: (fetchInfo, successCallback, failureCallback) => {
+        axios
+            .get('/newcalendar/purchases')
+            .then(({data}) => {
+                console.log('EventsData: ', data);
+                successCallback(data.data);
+            })
+            .catch(failureCallback);
+    },
+    eventContent: (arg) => {
+        const container = document.createElement('div');
+        container.className = 'eventContainer';
+        const timeTextEl = document.createElement('i');
+        // const clientNameEl = document.createElement('p');
+        // const serviceNameEl = document.createElement('p');
+        // const servicePriceEl = document.createElement('p');
+
+        // const {client, service} = arg.event.extendedProps;
+
+        // clientNameEl.innerHTML = 'Клиент: ' + client.name;
+        // serviceNameEl.innerHTML = 'Услуга: ' + service.name;
+        // servicePriceEl.innerHTML = 'Цена: ' + service.price;
+        timeTextEl.innerHTML = 'Время: ' + arg.timeText;
+        container.appendChild(timeTextEl);
+        // container.appendChild(clientNameEl);
+        // container.appendChild(serviceNameEl);
+        // container.appendChild(servicePriceEl);
+
+        let arrayOfDomNodes = [container];
+        return { domNodes: arrayOfDomNodes }
+    },
+});
+
+calendar.render();
+
 
 function saveData(event) {
     event.preventDefault();
-    formSubmit.disable = true;
-    formRemove.disable = true;
+    event.currentTarget.disabled = true;
 
     const formData = new FormData(form);
 
@@ -63,26 +125,26 @@ function saveData(event) {
         .catch((error) => console.log(error))
         .finally(() => {
             modal.toggle();
+            calendar.refetchEvents();
         });
 }
 
-function timeToDateTime(time) {
-    const date = new Date();
-    const {hour, minute} = parseTime(time);
-    date.setHours(hour, minute, 0);
+function removeData(event){
+    event.preventDefault();
+    formSubmit.disabled = true;
+    event.currentTarget.disabled = true;
 
-    return date.toISOString().split('T')[0] + ' '
-        + date.toTimeString().split(' ')[0];
-}
-
-function parseTime(time) {
-    const hour = time.slice(0,2);
-    const indexOfSeparator = time.indexOf(':');
-    const minute = time.slice(indexOfSeparator+1, indexOfSeparator+3);
-    return {
-        'hour': hour,
-        'minute': minute
-    };
+    const formData = new FormData(form);
+    const id = formData.get('purchases_id');
+    axios.delete('/newcalendar', {
+        data: {id}
+    })
+        .then((res) => console.log(res))
+        .catch((e) => console.log('ErrorMessage: ', e))
+        .finally(() => {
+            modal.toggle();
+            calendar.refetchEvents();
+        });
 }
 
 function changeServiceSelect(event) {
@@ -96,83 +158,16 @@ function changeServiceSelect(event) {
     price.value = priceValue ?? '';
 }
 
-function plusTime(fT, sT){
-    const {hour: fHour, minute: fMinute} = parseT(fT);
-    const {hour: sHour, minute: sMinute} = parseT(sT);
-    const hour = parseInt(fHour) + parseInt(sHour);
-    const minute = parseInt(fMinute) + parseInt(sMinute);
-    return `${pT(hour)}:${pT(minute)}:00`;
-}
-
-function parseT(stringTime) {
-    const hour = stringTime.slice(0, 2);
-    const minute = stringTime.slice(3, 5);
-    return {
-        hour, minute
-    }
-}
-
-
-
-axios.get('/newcalendar/staffs')
-    .then(initCalendar)
-    .catch(errorResponse);
-
-function mapStaffs(res) {
-    return res.map( ({id, name}) => ({id, title: name}));
-}
-
-function initCalendar({data})
-{
-    const calendar = new Calendar(calendarEl, {
-        plugins: [ resourceTimeGridPlugin, interactionPlugin ],
-        initialView: 'resourceTimeGridDay',
-        locale: 'ru',
-        selectable: true,
-        allDaySlot: false,
-        resources: data.data,
-        slotMinTime: '08:00:00',
-        slotMaxTime: '23:00:00',
-        slotLabelFormat: {
-            hour: 'numeric',
-            minute: '2-digit',
-            omitZeroMinute: false,
-        },
-        dateClick: ({resource, date}) => {
-            const {id, title} = resource;
-            inputStaff.value = title;
-            inputStaffId.value = id;
-            inputRegisterTime.value = parseDateToTime(date);
-            clearModalForm();
-            formRemove.hidden = true;
-            modal.toggle();
-        },
-        eventClick: ({event}) => {
-            fillModal(
-                {
-                    ...event.extendedProps,
-                    startTime: event.start,
-                    endTime: event.end
-                });
-            modal.toggle();
-        },
-        events: {
-            url: '/newcalendar/purchases',
-            success: ({data}) => data
-        }
-    });
-
-    calendar.render();
-}
-
 function fillModal(props) {
-    price.value = props['total_price'];
+    price.value = props.service['price'];
     serviceStartDate.value = `${pT(props.startTime.getHours())}:${pT(props.startTime.getMinutes())}:${pT(props.startTime.getSeconds())}`;
     endTimeInput.value = `${pT(props.endTime.getHours())}:${pT(props.endTime.getMinutes())}:${pT(props.endTime.getSeconds())}`;
     purchases_id.value = props['purchase_id'];
-    inputStaff.value = props['staff'].title;
-    select(clientSelect, props['client_id']);
-    select(serviceSelect, props['service_id']);
+    inputStaff.value = props.staff.name;
+    select(clientSelect, props.client.id);
+    select(serviceSelect, props.service.id);
+    formSubmit.disabled = false;
+    formRemove.disabled = false;
     formRemove.hidden = false;
 }
 
@@ -180,32 +175,12 @@ function errorResponse(err){
     console.log('Error message: ', err);
 }
 
-function parseDateToTime(predate){
-    const date = new Date(predate);
-    const hour = date.getHours();
-    const minute = date.getMinutes();
-    return `${pT(hour)}:${pT(minute)}`;
-}
-
-function pT(time) {
-    return time < 10 ? `0${time}` : time;
-}
-
-
 function clearModalForm() {
     select(serviceSelect, 'none');
     select(clientSelect, 'none');
     price.value = '';
     endTimeInput.value = '';
-}
-
-function select(select, value)
-{
-    const options = select.getElementsByTagName('option');
-
-    for (let i = 0; i < options.length; i++) {
-        if (options[i].value == value) select[i].selected = true;
-    }
+    purchases_id.value = '';
 }
 
 

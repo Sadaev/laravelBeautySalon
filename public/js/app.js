@@ -5227,6 +5227,8 @@ function removeData(event) {
   event.preventDefault();
   var formData = new FormData(form);
   var id = formData.get('purchases_id');
+  formSubmit.disable = true;
+  formRemove.disable = true;
   axios["delete"]('/calendar', {
     data: {
       id: id
@@ -5241,7 +5243,7 @@ function removeData(event) {
   });
 }
 
-function getServicePrice(event) {
+function changeServiceSelect(event) {
   var $elem = event.currentTarget;
   var $selectedOption = $elem.selectedOptions.item(0);
   var priceInput = form.querySelector('#price');
@@ -5257,6 +5259,8 @@ function saveData(event) {
   date.setHours(time.hour, time.minute, 0);
   var prepareDate = date.toISOString().split('T')[0] + ' ' + date.toTimeString().split(' ')[0];
   formData.set('register_date', prepareDate);
+  formSubmit.disable = true;
+  formRemove.disable = true;
   axios.post('/calendar', formData).then(function (response) {
     console.log(response);
   })["catch"](function (error) {
@@ -5279,6 +5283,8 @@ function parseTime(time) {
 }
 
 function fillModalForm(e) {
+  formSubmit.disable = false;
+  formRemove.disable = false;
   var $el = e.currentTarget;
   console.log('element: ', $el);
   var staff_id = form.querySelector('[name="staff_id"]');
